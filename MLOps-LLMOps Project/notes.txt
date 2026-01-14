@@ -1,0 +1,40 @@
+-- Python version: 3.13.11
+
+-- Ollama model name: phi3:mini
+
+-- To download/pull Ollama models
+ollama pull model_name
+ollama pull phi3:mini
+
+-- To run the model in console
+ollama run model_name
+ollama run phi3:mini
+
+-- FastAPI localhost address
+http://127.0.0.1:8000/docs
+
+-- To start the server (you must be inside the project folder root)
+uvicorn app.main:app --reload
+
+-- To run the pdf script (you must be inside the project folder root)
+python -m app.ingestion.pdf_to_chroma
+
+-- To compose and run the docker container
+docker compose up
+
+-- To logout and clear any partial pulls
+docker logout
+docker system prune -f
+
+-- To open Prometheus metrics
+http://localhost:8000/metrics
+
+-- To open Prometheus
+http://localhost:9090/
+
+-- To open Grafana
+http://localhost:3000/
+
+-- Grafana log in
+username: admin
+password: admin
