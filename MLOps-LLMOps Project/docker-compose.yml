@@ -1,17 +1,19 @@
+version: "2.4"
+
 services:
   ollama:
     build:
       context: .
-      dockerfile: Dockerfile.ollama
+      dockerfile: ./Dockerfiles/Dockerfile.ollama
     container_name: ollama
     ports:
       - "11434:11434"
     restart: unless-stopped
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   chromadb:
     image: chromadb/chroma:latest
@@ -24,20 +26,20 @@ services:
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma
     restart: unless-stopped
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+    healthcheck:
+      test: [ "CMD", "/bin/bash", "-c", "cat < /dev/null > /dev/tcp/localhost/8000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ingestion:
     build:
       context: .
-      dockerfile: Dockerfile.ingestion
+      dockerfile: ./Dockerfiles/Dockerfile.ingestion
     container_name: rag-ingestion
     depends_on:
-      - chromadb
-        # condition: service_healthy
+      chromadb:
+        condition: service_healthy
     volumes:
       - ./pdfs:/app/pdfs
     environment:
@@ -48,13 +50,13 @@ services:
   rag-api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: ./Dockerfiles/Dockerfile.api
     container_name: rag-api
     depends_on:
-      - chromadb
-        # condition: service_healthy
-      - ollama
-        # condition: service_healthy
+      chromadb:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
     ports:
       - "8001:8000"
     environment:
@@ -65,6 +67,11 @@ services:
       - sqlite-data:/app/data
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   prometheus:
     image: prom/prometheus:latest
@@ -73,15 +80,33 @@ services:
       - ./prometheus_llmops.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    depends_on:
+      rag-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    volumes:
+        # Your existing provisioning config
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      # Dashboard JSON file
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      # Grafana data
+      - grafana-data:/var/lib/grafana
     ports:
       - "3000:3000"
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_healthy
 
 volumes:
   chroma-data:
   sqlite-data:
+  grafana-data:

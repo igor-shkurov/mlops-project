@@ -59,6 +59,8 @@ def ingest_pdfs():
         print(f"No PDFs found in {PDF_FOLDER}. Place some PDFs to ingest.")
         return
 
+    total_chunks = 0
+
     for pdf_file in files:
         print(f"Processing {pdf_file.name}...")
         text = parse_pdf(pdf_file)
@@ -72,8 +74,12 @@ def ingest_pdfs():
                 metadatas=[{"source": pdf_file.name}],
                 embeddings=[vector],
             )
+        total_chunks += len(chunks)
 
-    print(f"ChromaDB ingestion completed. Processed {len(files)} files.")
+    print(f"Files processed: {len(files)}")
+    print(f"Total chunks: {total_chunks}")
+    print(f"Collection name: {collection.name}")
+    print(f"Collection count: {collection.count()}")
 
 
 # Run ingestion
