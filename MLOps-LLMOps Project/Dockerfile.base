@@ -1,0 +1,9 @@
+# Dockerfile.base
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir sentence-transformers
+
+RUN pip install --no-cache-dir \
+    langchain langchain-huggingface chromadb

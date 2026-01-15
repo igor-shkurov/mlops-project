@@ -1,0 +1,11 @@
+
+FROM ai-base:latest
+
+WORKDIR /app
+
+COPY requirements_ingestion.txt .
+RUN pip install --no-cache-dir -r requirements_ingestion.txt
+
+COPY ingest.py .
+
+RUN mkdir -p /app/pdfs /app/chroma_db_data

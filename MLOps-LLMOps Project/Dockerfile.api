@@ -1,0 +1,16 @@
+# Dockerfile.api
+FROM ai-base:latest
+
+WORKDIR /app
+
+# Копируем requirements и устанавливаем зависимости
+COPY requirements_api.txt .
+RUN pip install --no-cache-dir -r requirements_api.txt
+
+# Копируем исходный код
+COPY schemas.py .
+COPY database.py .
+COPY main.py .
+
+# Создаём директорию для SQLite
+RUN mkdir -p /app/data
