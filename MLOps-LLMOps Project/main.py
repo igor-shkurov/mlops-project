@@ -71,7 +71,7 @@ app = FastAPI()
 
 
 # Retrieve relevant document chunks from ChromaDB
-def query_chroma(user_query: str, top_k: int = 3, distance_threshold: float = 1.0):
+def query_chroma(user_query: str, top_k: int = 3, distance_threshold: float = 0.5):
     query_vector = embeddings_model.embed_documents([user_query])[0]
     results = collection.query(query_embeddings=[query_vector], n_results=top_k)
 
